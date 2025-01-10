@@ -3,21 +3,23 @@
 <head>
 <title>MPU Quiz</title>
 <style>
-body { margin: 20px; font-family: sans-serif; }
-.question { margin-bottom: 10px; color: darkblue; font-weight: bold; /* Frage wird dunkelblau und fett */ }
-.answers button { display: block; width: 100%; padding: 10px; margin-bottom: 5px; border: 1px solid #ccc; }
+body { margin: 20px; font-family: sans-serif; background-color: #e3f2fd; }
+.question { margin-bottom: 10px; color: darkblue; font-weight: bold; font-size: 1.5em; }
+.answers button { display: block; width: 100%; padding: 15px; margin-bottom: 10px; border: 1px solid #ccc; font-size: 1.2em; font-weight: bold; background-color: #fff9c4; }
 .answers button.selected { background-color: #e0f2f7; }
 .answers button.correct { background-color: #c8e6c9; }
 .answers button.incorrect { background-color: #ffcdd2; }
 #quiz { display: none; }
 #results { display: none; margin-top: 20px; text-align: center; font-size: 1.2em; font-weight: bold; }
+.progress { margin-bottom: 10px; font-size: 1em; font-weight: bold; color: #333; }
 </style>
 </head>
 <body>
 
-<button onclick="startQuiz()">Quiz starten</button>
+<button onclick="startQuiz()" style="font-size: 1.5em; font-weight: bold; color: darkblue; padding: 15px;">Quiz starten</button>
 
 <div id="quiz">
+    <div class="progress" id="progress"></div>
     <div class="question" id="questionText"></div>
     <div class="answers" id="answerButtons"></div>
     <button onclick="nextQuestion()">Nächste Frage</button>
@@ -27,7 +29,7 @@ body { margin: 20px; font-family: sans-serif; }
 
 <script>
 const qa_data = [
-    {
+   {
                 "question": "De ce veniți la MPU? De ce sunteți astăzi aici?",
                 "answer": "Sunt aici la MPU pentru că am condus sub influența alcoolului, nu am respectat legea, am făcut un accident, am fost un egoist, am fost un pericol pentru mine și pentru alții! Mi-am dat seama că am o problemă cu alcoolul, am fost în abuz de alcool, și am încetat să beau. Astăzi aș vrea să vă arăt că m-am schimbat și că acum sunt capabil să conduc responsabil."
             },
@@ -209,6 +211,12 @@ const qa_data = [
             }
 ];
 
+function stripHtml(html) {
+    const tmp = document.createElement("div");
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || "";
+}
+
 function shuffleArray(array) {
     for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -218,27 +226,25 @@ function shuffleArray(array) {
 
 function generateAnswers(questionIndex) {
     if (!qa_data[questionIndex] || !qa_data[questionIndex].answer) {
-        console.error("Ungültige Daten für Frage:", questionIndex);
+        console.error("Invalid data for question:", questionIndex);
         return [];
     }
 
-    const correctAnswer = qa_data[questionIndex].answer;
+    const correctAnswer = stripHtml(qa_data[questionIndex].answer);
     const wrongAnswers = [];
 
-    // Generiere 2 unterschiedliche falsche Antworten
     for (let i = 0; i < 2; i++) {
         let randomIndex = Math.floor(Math.random() * qa_data.length);
-        while (randomIndex === questionIndex || wrongAnswers.includes(qa_data[randomIndex].answer)) {
+        while (randomIndex === questionIndex || wrongAnswers.includes(stripHtml(qa_data[randomIndex].answer))) {
             randomIndex = Math.floor(Math.random() * qa_data.length);
         }
-        wrongAnswers.push(qa_data[randomIndex].answer);
+        wrongAnswers.push(stripHtml(qa_data[randomIndex].answer));
     }
 
     const allAnswers = [correctAnswer, ...wrongAnswers];
     shuffleArray(allAnswers);
     return allAnswers;
 }
-
 
 let currentQuestionIndex = 0;
 let correctAnswers = 0;
@@ -247,7 +253,13 @@ function startQuiz() {
     document.getElementById('quiz').style.display = 'block';
     currentQuestionIndex = 0;
     correctAnswers = 0;
+    updateProgress();
     showQuestion();
+}
+
+function updateProgress() {
+    const progress = document.getElementById('progress');
+    progress.textContent = `Frage ${currentQuestionIndex + 1} von ${qa_data.length}`;
 }
 
 function showQuestion() {
@@ -255,6 +267,7 @@ function showQuestion() {
     answerButtons.innerHTML = '';
 
     if (currentQuestionIndex < qa_data.length) {
+        updateProgress();
         const question = qa_data[currentQuestionIndex].question;
         document.getElementById('questionText').textContent = question;
 
@@ -270,10 +283,8 @@ function showQuestion() {
     }
 }
 
-
-
 function checkAnswer(selectedAnswer, selectedButtonIndex) {
-    const correctAnswer = qa_data[currentQuestionIndex].answer;
+    const correctAnswer = stripHtml(qa_data[currentQuestionIndex].answer);
     const answerButtons = document.getElementById('answerButtons').children;
     
     for (let i = 0; i < answerButtons.length; i++) {
@@ -299,23 +310,21 @@ function nextQuestion() {
 }
 
 function showResults() {
-  document.getElementById('quiz').style.display = 'none';
-  document.getElementById('results').style.display = 'block';
+    document.getElementById('quiz').style.display = 'none';
+    document.getElementById('results').style.display = 'block';
 
-  const correctCount = correctAnswers;
-  const totalQuestions = qa_data.length;
-  let resultMessage = `Sie haben ${correctCount} von ${totalQuestions} Fragen richtig beantwortet. `;
+    const correctCount = correctAnswers;
+    const totalQuestions = qa_data.length;
+    let resultMessage = `Sie haben ${correctCount} von ${totalQuestions} Fragen richtig beantwortet. `;
 
-  if (correctCount > 40) {
-    resultMessage += "<span style='color:green;'>Test bestanden!</span>";
-  } else {
-    resultMessage += "<span style='color:red;'>Test nicht bestanden.</span>";
-  }
+    if (correctCount > 40) {
+        resultMessage += "<span style='color:green;'>Test bestanden!</span>";
+    } else {
+        resultMessage += "<span style='color:red;'>Test nicht bestanden.</span>";
+    }
 
-  document.getElementById('results').innerHTML = resultMessage;
+    document.getElementById('results').innerHTML = resultMessage;
 }
-
-
 </script>
 
 </body>
